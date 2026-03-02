@@ -113,6 +113,13 @@ class Sentinel_Admin {
 			),
 			array(
 				'parent' => 'sentinel-security',
+				'title'  => __( 'Intelligence', 'wp-sentinel-security' ),
+				'menu'   => __( 'Intelligence', 'wp-sentinel-security' ),
+				'slug'   => 'sentinel-intelligence',
+				'cb'     => array( $this, 'render_intelligence' ),
+			),
+			array(
+				'parent' => 'sentinel-security',
 				'title'  => __( 'Settings', 'wp-sentinel-security' ),
 				'menu'   => __( 'Settings', 'wp-sentinel-security' ),
 				'slug'   => 'sentinel-settings',
@@ -193,10 +200,11 @@ class Sentinel_Admin {
 				'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
 				'restUrl'  => rest_url( 'sentinel/v1/' ),
 				'nonces'   => array(
-					'scan'    => wp_create_nonce( 'sentinel_scan_nonce' ),
-					'backup'  => wp_create_nonce( 'sentinel_backup_nonce' ),
-					'restore' => wp_create_nonce( 'sentinel_restore_nonce' ),
-					'delete'  => wp_create_nonce( 'sentinel_delete_nonce' ),
+					'scan'         => wp_create_nonce( 'sentinel_scan_nonce' ),
+					'backup'       => wp_create_nonce( 'sentinel_backup_nonce' ),
+					'restore'      => wp_create_nonce( 'sentinel_restore_nonce' ),
+					'delete'       => wp_create_nonce( 'sentinel_delete_nonce' ),
+					'intelligence' => wp_create_nonce( 'sentinel_intelligence_nonce' ),
 				),
 				'i18n'     => array(
 					'scanning'          => __( 'Scanning...', 'wp-sentinel-security' ),
@@ -356,6 +364,15 @@ class Sentinel_Admin {
 			echo '<tr><td colspan="4">' . esc_html__( 'No activity recorded yet.', 'wp-sentinel-security' ) . '</td></tr>';
 		}
 		echo '</tbody></table></div>';
+	}
+
+	/**
+	 * Render intelligence page.
+	 *
+	 * @return void
+	 */
+	public function render_intelligence() {
+		require SENTINEL_PLUGIN_DIR . 'admin/views/intelligence.php';
 	}
 
 	/**
