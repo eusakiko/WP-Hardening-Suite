@@ -98,7 +98,7 @@ class Sentinel_DB {
 	/**
 	 * Get activity log with pagination.
 	 *
-	 * @param array $filters  Optional filters: severity, event_type, user_id.
+	 * @param array $filters  Optional filters: severity, event_type, event_category, user_id, date_from, date_to.
 	 * @param int   $page     Page number (1-based).
 	 * @param int   $per_page Items per page.
 	 * @return array {items: array, total: int, pages: int}
@@ -119,9 +119,30 @@ class Sentinel_DB {
 			$params[] = sanitize_text_field( $filters['event_type'] );
 		}
 
+		if ( ! empty( $filters['event_category'] ) ) {
+			$where[]  = 'event_category = %s';
+			$params[] = sanitize_text_field( $filters['event_category'] );
+		}
+
 		if ( ! empty( $filters['user_id'] ) ) {
 			$where[]  = 'user_id = %d';
 			$params[] = absint( $filters['user_id'] );
+		}
+
+		if ( ! empty( $filters['date_from'] ) ) {
+			$date_from = sanitize_text_field( $filters['date_from'] );
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_from ) ) {
+				$where[]  = 'created_at >= %s';
+				$params[] = $date_from . ' 00:00:00';
+			}
+		}
+
+		if ( ! empty( $filters['date_to'] ) ) {
+			$date_to = sanitize_text_field( $filters['date_to'] );
+			if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date_to ) ) {
+				$where[]  = 'created_at <= %s';
+				$params[] = $date_to . ' 23:59:59';
+			}
 		}
 
 		$where_clause = implode( ' AND ', $where );

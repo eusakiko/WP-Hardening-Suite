@@ -43,6 +43,13 @@ class Sentinel_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_filter( 'plugin_action_links_' . SENTINEL_PLUGIN_BASENAME, array( $this, 'add_plugin_links' ) );
+
+		// Activity log AJAX handlers.
+		add_action( 'wp_ajax_sentinel_export_activity_log', array( $this, 'ajax_export_activity_log' ) );
+		add_action( 'wp_ajax_sentinel_clear_old_logs',      array( $this, 'ajax_clear_old_logs' ) );
+
+		// Backup download via admin-post.
+		add_action( 'admin_post_sentinel_download_backup', array( $this, 'handle_download_backup' ) );
 	}
 
 	/**
@@ -396,8 +403,25 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_activity() {
-		$page     = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$log_data = Sentinel_DB::get_activity_log( array(), $page, 20 );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$page    = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1;
+		$filters = array();
+
+		if ( ! empty( $_GET['date_from'] ) ) {
+			$filters['date_from'] = sanitize_text_field( wp_unslash( $_GET['date_from'] ) );
+		}
+		if ( ! empty( $_GET['date_to'] ) ) {
+			$filters['date_to'] = sanitize_text_field( wp_unslash( $_GET['date_to'] ) );
+		}
+		if ( ! empty( $_GET['category'] ) ) {
+			$filters['event_category'] = sanitize_text_field( wp_unslash( $_GET['category'] ) );
+		}
+		if ( ! empty( $_GET['severity'] ) ) {
+			$filters['severity'] = sanitize_text_field( wp_unslash( $_GET['severity'] ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$log_data = Sentinel_DB::get_activity_log( $filters, $page, 20 );
 		require SENTINEL_PLUGIN_DIR . 'admin/views/activity.php';
 	}
 
@@ -462,5 +486,132 @@ class Sentinel_Admin {
 				'deleted'
 			)
 		);
+	}
+
+	/**
+	 * AJAX: export activity log as CSV.
+	 *
+	 * @return void
+	 */
+	public function ajax_export_activity_log() {
+		check_ajax_referer( 'sentinel_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'wp-sentinel-security' ) ), 403 );
+		}
+
+		$log_data = Sentinel_DB::get_activity_log( array(), 1, 10000 );
+		$items    = $log_data['items'];
+
+		$filename = 'sentinel-activity-log-' . gmdate( 'Y-m-d' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		// BOM for Excel compatibility.
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo "\xEF\xBB\xBF";
+
+		$output = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+
+		fputcsv( $output, array( 'Date', 'User ID', 'Event Type', 'Category', 'Severity', 'IP Address', 'Description' ) );
+
+		foreach ( $items as $item ) {
+			fputcsv(
+				$output,
+				array(
+					$item->created_at,
+					$item->user_id,
+					$item->event_type,
+					$item->event_category,
+					$item->severity,
+					$item->ip_address,
+					$item->description,
+				)
+			);
+		}
+
+		fclose( $output ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		exit;
+	}
+
+	/**
+	 * AJAX: clear old activity log entries.
+	 *
+	 * @return void
+	 */
+	public function ajax_clear_old_logs() {
+		check_ajax_referer( 'sentinel_nonce', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'wp-sentinel-security' ) ), 403 );
+		}
+
+		$retention_days = absint( $this->settings['log_retention_days'] ?? 90 );
+		$deleted        = Sentinel_DB::cleanup_old_logs( $retention_days );
+
+		if ( false === $deleted ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to clear logs.', 'wp-sentinel-security' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					/* translators: %d: number of log entries deleted */
+					__( '%d log entries deleted.', 'wp-sentinel-security' ),
+					(int) $deleted
+				),
+			)
+		);
+	}
+
+	/**
+	 * Admin-post handler: stream a backup file download.
+	 *
+	 * @return void
+	 */
+	public function handle_download_backup() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Insufficient permissions.', 'wp-sentinel-security' ), 403 );
+		}
+
+		$backup_id = isset( $_GET['backup_id'] ) ? absint( $_GET['backup_id'] ) : 0;
+
+		if ( ! $backup_id ) {
+			wp_die( esc_html__( 'Invalid backup ID.', 'wp-sentinel-security' ) );
+		}
+
+		$nonce_key = 'sentinel_download_backup_' . $backup_id;
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), $nonce_key ) ) {
+			wp_die( esc_html__( 'Security check failed.', 'wp-sentinel-security' ) );
+		}
+
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$backup = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}sentinel_backups WHERE id = %d AND status = %s",
+				$backup_id,
+				'completed'
+			)
+		);
+
+		if ( ! $backup || empty( $backup->file_path ) || ! file_exists( $backup->file_path ) ) {
+			wp_die( esc_html__( 'Backup file not found.', 'wp-sentinel-security' ) );
+		}
+
+		$extension = strtolower( pathinfo( $backup->file_path, PATHINFO_EXTENSION ) );
+		$mime      = ( 'zip' === $extension ) ? 'application/zip' : 'application/octet-stream';
+
+		header( 'Content-Type: ' . $mime );
+		header( 'Content-Disposition: attachment; filename="' . sanitize_file_name( basename( $backup->file_path ) ) . '"' );
+		header( 'Content-Length: ' . filesize( $backup->file_path ) );
+		header( 'Pragma: no-cache' );
+		header( 'Expires: 0' );
+
+		readfile( $backup->file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile
+		exit;
 	}
 }
