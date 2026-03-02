@@ -31,6 +31,7 @@ class Sentinel_Cron {
 		add_action( 'sentinel_cleanup_logs', array( __CLASS__, 'run_log_cleanup' ) );
 		add_action( 'sentinel_vulnerability_feed_update', array( __CLASS__, 'run_feed_update' ) );
 		add_action( 'sentinel_backup_cleanup', array( __CLASS__, 'run_backup_cleanup' ) );
+		add_action( 'sentinel_scheduled_report', array( __CLASS__, 'run_scheduled_report' ) );
 	}
 
 	/**
@@ -120,6 +121,31 @@ class Sentinel_Cron {
 				array( '%s' ),
 				array( '%d' )
 			);
+		}
+	}
+
+	/**
+	 * Send scheduled report via email.
+	 *
+	 * @return void
+	 */
+	public static function run_scheduled_report() {
+		$settings = get_option( 'sentinel_settings', array() );
+		if ( empty( $settings['scheduled_report_email'] ) ) {
+			return;
+		}
+		if ( class_exists( 'Report_Engine' ) ) {
+			$engine = new Report_Engine( $settings );
+			$engine->init();
+			$report_id = $engine->generate_report( 'executive', 'html' );
+			if ( ! is_wp_error( $report_id ) && class_exists( 'Alert_Email' ) ) {
+				$mailer  = new Alert_Email( $settings );
+				$mailer->send(
+					__( 'WP Sentinel Security — Scheduled Security Report', 'wp-sentinel-security' ),
+					__( 'Your scheduled security report is ready. Please log in to your WordPress dashboard to view it.', 'wp-sentinel-security' ),
+					array( 'severity' => 'info' )
+				);
+			}
 		}
 	}
 }

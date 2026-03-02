@@ -166,6 +166,23 @@ class Sentinel_Admin {
 			SENTINEL_VERSION
 		);
 
+		// Reports CSS.
+		wp_enqueue_style(
+			'sentinel-reports',
+			SENTINEL_PLUGIN_URL . 'admin/css/sentinel-reports.css',
+			array( 'sentinel-admin' ),
+			SENTINEL_VERSION
+		);
+
+		// Intelligence JS.
+		wp_enqueue_script(
+			'sentinel-intelligence',
+			SENTINEL_PLUGIN_URL . 'admin/js/sentinel-intelligence.js',
+			array( 'sentinel-admin' ),
+			SENTINEL_VERSION,
+			true
+		);
+
 		// Chart.js from CDN.
 		wp_enqueue_script(
 			'chartjs',
@@ -205,6 +222,9 @@ class Sentinel_Admin {
 					'restore'      => wp_create_nonce( 'sentinel_restore_nonce' ),
 					'delete'       => wp_create_nonce( 'sentinel_delete_nonce' ),
 					'intelligence' => wp_create_nonce( 'sentinel_intelligence_nonce' ),
+					'hardening'    => wp_create_nonce( 'sentinel_hardening_nonce' ),
+					'report'       => wp_create_nonce( 'sentinel_report_nonce' ),
+					'alert'        => wp_create_nonce( 'sentinel_alert_nonce' ),
 				),
 				'i18n'     => array(
 					'scanning'          => __( 'Scanning...', 'wp-sentinel-security' ),
@@ -310,9 +330,22 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_hardening() {
-		$hardening = Sentinel_DB::get_hardening_status();
-		echo '<div class="wrap"><h1>' . esc_html__( 'Hardening Status', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Run a configuration scan to populate hardening checks.', 'wp-sentinel-security' ) . '</p></div>';
+		$hardening_dir = SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/';
+
+		require_once $hardening_dir . 'class-file-hardening.php';
+		require_once $hardening_dir . 'class-wp-config-hardening.php';
+		require_once $hardening_dir . 'class-user-hardening.php';
+		require_once $hardening_dir . 'class-database-hardening.php';
+		require_once $hardening_dir . 'class-api-hardening.php';
+		require_once $hardening_dir . 'class-hardening-engine.php';
+
+		$engine = new Hardening_Engine( $this->settings );
+		$engine->init();
+
+		$checks = $engine->get_all_checks();
+		$score  = $engine->get_hardening_score();
+
+		require SENTINEL_PLUGIN_DIR . 'admin/views/hardening.php';
 	}
 
 	/**
@@ -321,9 +354,15 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_backups() {
-		$backups = $this->get_backups_list();
-		echo '<div class="wrap"><h1>' . esc_html__( 'Backups', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Backup management coming soon.', 'wp-sentinel-security' ) . '</p></div>';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-database.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-files.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-engine.php';
+		$engine       = new Backup_Engine( $this->settings );
+		$backups      = $engine->get_backups( 1, 20 );
+		$storage_size = $engine->get_backup_storage_size();
+		$backup_count = $backups['total'];
+		$backups      = $backups['items'];
+		require SENTINEL_PLUGIN_DIR . 'admin/views/backups.php';
 	}
 
 	/**
@@ -332,8 +371,11 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_reports() {
-		echo '<div class="wrap"><h1>' . esc_html__( 'Reports', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Report generation coming soon.', 'wp-sentinel-security' ) . '</p></div>';
+		$engine       = new Report_Engine( $this->settings );
+		$report_data  = $engine->get_reports( 1, 20 );
+		$reports      = $report_data['items'];
+		$report_count = $report_data['total'];
+		require SENTINEL_PLUGIN_DIR . 'admin/views/reports.php';
 	}
 
 	/**
@@ -342,8 +384,10 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_alerts() {
-		echo '<div class="wrap"><h1>' . esc_html__( 'Alerts', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Alert configuration coming soon.', 'wp-sentinel-security' ) . '</p></div>';
+		$settings   = $this->settings;
+		$alert_data = Sentinel_DB::get_activity_log( array( 'event_category' => 'alert' ), 1, 20 );
+		$alerts     = $alert_data['items'];
+		require SENTINEL_PLUGIN_DIR . 'admin/views/alerts.php';
 	}
 
 	/**
@@ -354,16 +398,7 @@ class Sentinel_Admin {
 	public function render_activity() {
 		$page     = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$log_data = Sentinel_DB::get_activity_log( array(), $page, 20 );
-		echo '<div class="wrap"><h1>' . esc_html__( 'Activity Log', 'wp-sentinel-security' ) . '</h1>';
-		echo '<table class="wp-list-table widefat fixed striped"><thead><tr><th>' . esc_html__( 'Date', 'wp-sentinel-security' ) . '</th><th>' . esc_html__( 'Event', 'wp-sentinel-security' ) . '</th><th>' . esc_html__( 'Severity', 'wp-sentinel-security' ) . '</th><th>' . esc_html__( 'Description', 'wp-sentinel-security' ) . '</th></tr></thead><tbody>';
-		if ( ! empty( $log_data['items'] ) ) {
-			foreach ( $log_data['items'] as $entry ) {
-				echo '<tr><td>' . esc_html( $entry->created_at ) . '</td><td>' . esc_html( $entry->event_type ) . '</td><td>' . esc_html( $entry->severity ) . '</td><td>' . esc_html( $entry->description ) . '</td></tr>';
-			}
-		} else {
-			echo '<tr><td colspan="4">' . esc_html__( 'No activity recorded yet.', 'wp-sentinel-security' ) . '</td></tr>';
-		}
-		echo '</tbody></table></div>';
+		require SENTINEL_PLUGIN_DIR . 'admin/views/activity.php';
 	}
 
 	/**

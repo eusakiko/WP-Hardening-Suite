@@ -3,7 +3,7 @@
  * Plugin Name:       WP Sentinel Security
  * Plugin URI:        https://github.com/eusakiko/WP-Hardening-Suite
  * Description:       Advanced security plugin for WordPress — Detection, analysis and vulnerability management.
- * Version:           1.0.0
+ * Version:           2.0.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            WP Sentinel Security
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants.
-define( 'SENTINEL_VERSION', '1.0.0' );
+define( 'SENTINEL_VERSION', '2.0.0' );
 define( 'SENTINEL_PLUGIN_FILE', __FILE__ );
 define( 'SENTINEL_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SENTINEL_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
