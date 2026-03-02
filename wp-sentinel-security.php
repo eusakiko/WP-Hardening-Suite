@@ -75,27 +75,37 @@ function sentinel_check_requirements() {
 // Autoloader for plugin classes.
 spl_autoload_register(
 	function ( $class ) {
-		$prefix = 'Sentinel_';
-		if ( 0 !== strpos( $class, $prefix ) ) {
-			return;
-		}
-
-		$file_name = 'class-' . strtolower( str_replace( '_', '-', $class ) ) . '.php';
-
-		$locations = array(
-			SENTINEL_PLUGIN_DIR . 'includes/',
-			SENTINEL_PLUGIN_DIR . 'includes/database/',
-			SENTINEL_PLUGIN_DIR . 'includes/utils/',
-			SENTINEL_PLUGIN_DIR . 'includes/modules/scanner/',
-			SENTINEL_PLUGIN_DIR . 'includes/api/',
-			SENTINEL_PLUGIN_DIR . 'admin/',
+		$class_map = array(
+			// Core.
+			'Sentinel_Core'        => 'class-sentinel-core.php',
+			'Sentinel_Activator'   => 'class-sentinel-activator.php',
+			'Sentinel_Deactivator' => 'class-sentinel-deactivator.php',
+			// Database.
+			'Sentinel_DB'          => 'database/class-sentinel-db.php',
+			// Utils.
+			'Sentinel_Helper'      => 'utils/class-sentinel-helper.php',
+			'Sentinel_Cron'        => 'utils/class-sentinel-cron.php',
+			'Sentinel_Cache'       => 'utils/class-sentinel-cache.php',
+			'Scoring_Engine'       => 'utils/class-scoring-engine.php',
+			// Scanner modules.
+			'Scanner_Engine'       => 'modules/scanner/class-scanner-engine.php',
+			'Core_Integrity'       => 'modules/scanner/class-core-integrity.php',
+			'Plugin_Vulnerability' => 'modules/scanner/class-plugin-vulnerability.php',
+			'Theme_Vulnerability'  => 'modules/scanner/class-theme-vulnerability.php',
+			'File_Monitor'         => 'modules/scanner/class-file-monitor.php',
+			'Config_Analyzer'      => 'modules/scanner/class-config-analyzer.php',
+			'Permission_Checker'   => 'modules/scanner/class-permission-checker.php',
+			'Malware_Detector'     => 'modules/scanner/class-malware-detector.php',
+			'User_Audit'           => 'modules/scanner/class-user-audit.php',
+			// API.
+			'Sentinel_Rest_Api'    => 'api/class-sentinel-rest-api.php',
+			'Vulnerability_Feed'   => 'api/class-vulnerability-feed.php',
 		);
 
-		foreach ( $locations as $location ) {
-			$file = $location . $file_name;
+		if ( isset( $class_map[ $class ] ) ) {
+			$file = SENTINEL_PLUGIN_DIR . 'includes/' . $class_map[ $class ];
 			if ( file_exists( $file ) ) {
 				require_once $file;
-				return;
 			}
 		}
 	}

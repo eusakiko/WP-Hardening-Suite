@@ -65,6 +65,7 @@ class Sentinel_Cron {
 	public static function run_scheduled_scan() {
 		if ( class_exists( 'Scanner_Engine' ) ) {
 			$engine = new Scanner_Engine( get_option( 'sentinel_settings', array() ) );
+			$engine->init();
 			$engine->run_scan( 'quick', 'cron' );
 		}
 	}

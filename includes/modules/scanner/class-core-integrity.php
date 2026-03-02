@@ -49,6 +49,24 @@ class Core_Integrity {
 		$vulnerabilities = array();
 		$checksums       = $this->get_checksums();
 
+		if ( null === $checksums ) {
+			return array(
+				array(
+					'component_type'    => 'core',
+					'component_name'    => 'WordPress Core',
+					'component_version' => get_bloginfo( 'version' ),
+					'vulnerability_id'  => 'core-integrity-api-unreachable',
+					'title'             => 'Core integrity check skipped: WordPress.org API unreachable',
+					'description'       => 'The WordPress.org checksums API could not be reached. Core file integrity could not be verified. Please check your server\'s outbound connectivity.',
+					'severity'          => 'info',
+					'cvss_score'        => 0.0,
+					'cvss_vector'       => '',
+					'recommendation'    => 'Ensure your server can reach api.wordpress.org and retry the scan.',
+					'reference_urls'    => wp_json_encode( array( 'https://api.wordpress.org/core/checksums/1.0/' ) ),
+				),
+			);
+		}
+
 		if ( empty( $checksums ) ) {
 			return $vulnerabilities;
 		}
@@ -157,7 +175,7 @@ class Core_Integrity {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return array();
+			return null;
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );

@@ -242,10 +242,16 @@ class Config_Analyzer {
 
 	/** @return array|null */
 	private function check_sensitive_files() {
+		$config_path = ABSPATH . 'wp-config.php';
+		if ( ! file_exists( $config_path ) && file_exists( dirname( ABSPATH ) . '/wp-config.php' ) ) {
+			$config_path = dirname( ABSPATH ) . '/wp-config.php';
+		}
+		$config_dir = dirname( $config_path ) . '/';
+
 		$files = array( 'readme.html', 'license.txt', 'wp-config.php.bak', 'wp-config.bak', '.env' );
 
 		foreach ( $files as $file ) {
-			if ( file_exists( ABSPATH . $file ) ) {
+			if ( file_exists( ABSPATH . $file ) || file_exists( $config_dir . $file ) ) {
 				return $this->build( 'config-sensitive-files', sprintf( 'Sensitive file accessible: %s', $file ), sprintf( 'The file "%s" was found in the webroot. Sensitive files can expose version information or credentials.', $file ), 'medium', 5.3, sprintf( 'Delete or move the file "%s" from the webroot.', $file ) );
 			}
 		}
