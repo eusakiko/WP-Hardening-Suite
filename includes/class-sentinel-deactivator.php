@@ -28,6 +28,8 @@ class Sentinel_Deactivator {
 			'sentinel_cleanup_logs',
 			'sentinel_vulnerability_feed_update',
 			'sentinel_backup_cleanup',
+			'sentinel_run_async_scan',       // BUG FIX: async one-time events.
+			'sentinel_lockdown_auto_disable', // BUG FIX: lockdown expiry events.
 		);
 
 		foreach ( $cron_hooks as $hook ) {

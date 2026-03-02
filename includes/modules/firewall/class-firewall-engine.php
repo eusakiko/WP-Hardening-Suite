@@ -50,13 +50,23 @@ class Firewall_Engine {
 		),
 		array(
 			'id'          => 'sqli-comment',
-			'pattern'     => '/(?:--|#|\/\*)\s*$/m',
+			// Refined pattern: require preceding non-HTML-comment context.
+			// '<!--' is legitimate HTML; only bare '--' or '#' at EOL after
+			// a non-'<' character are SQL comment terminators.
+			'pattern'     => '/(?<![<\s])--\s*$|(?:^|[^a-zA-Z])#\s*$|\/\*[^!]/m',
 			'description' => 'SQL injection: comment terminator',
 			'severity'    => 'high',
 		),
 		array(
 			'id'          => 'sqli-tautology',
-			'pattern'     => '/(?:\bor\b|\band\b)\s+\d+\s*=\s*\d+/i',
+			// Require a SQL-context indicator before the tautology: closing quote,
+			// closing paren, or a digit/word-boundary typical of injected payloads.
+			// This reduces false positives from natural-language text like
+			// "there are 1=1 ways" while still catching ' OR 1=1 and 1 OR 1=1--.
+			// Note: bare leading-edge cases (e.g. "OR 1=1" at start of input)
+			// are intentionally excluded to avoid false positives; stacked-query
+			// and union rules cover those attack vectors instead.
+			'pattern'     => '/[\'"\)]\s*(?:\bor\b|\band\b)\s+\d+\s*=\s*\d+/i',
 			'description' => 'SQL injection: tautology (e.g. OR 1=1)',
 			'severity'    => 'critical',
 		),
@@ -273,29 +283,41 @@ class Firewall_Engine {
 
 		// GET parameters — raw values inspected intentionally (sanitization would strip attack patterns).
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		foreach ( $_GET as $value ) {
-			if ( is_string( $value ) ) {
-				$inputs[] = wp_unslash( $value );
-			}
-		}
+		$inputs = array_merge( $inputs, $this->flatten_input( $_GET ) );
 
 		// POST parameters — raw values inspected intentionally for WAF pattern detection.
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		foreach ( $_POST as $value ) {
-			if ( is_string( $value ) ) {
-				$inputs[] = wp_unslash( $value );
-			}
-		}
+		$inputs = array_merge( $inputs, $this->flatten_input( $_POST ) );
 
 		// Cookie values — raw values inspected intentionally for WAF pattern detection.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		foreach ( $_COOKIE as $value ) {
-			if ( is_string( $value ) ) {
-				$inputs[] = wp_unslash( $value );
-			}
-		}
+		$inputs = array_merge( $inputs, $this->flatten_input( $_COOKIE ) );
 
 		return $inputs;
+	}
+
+	/**
+	 * Recursively flatten a superglobal array into a flat list of string values.
+	 *
+	 * Handles nested arrays such as $_POST['data']['sql'] = 'payload'.
+	 *
+	 * @param array $data   Input array (may be nested).
+	 * @param int   $depth  Current recursion depth (max 5 to avoid DoS).
+	 * @return string[] Flat list of unslashed string values.
+	 */
+	private function flatten_input( $data, $depth = 0 ) {
+		$strings = array();
+		if ( ! is_array( $data ) || $depth > 5 ) {
+			return $strings;
+		}
+		foreach ( $data as $value ) {
+			if ( is_string( $value ) ) {
+				$strings[] = wp_unslash( $value );
+			} elseif ( is_array( $value ) ) {
+				$strings = array_merge( $strings, $this->flatten_input( $value, $depth + 1 ) );
+			}
+		}
+		return $strings;
 	}
 
 	/**

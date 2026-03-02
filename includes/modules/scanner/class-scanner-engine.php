@@ -139,11 +139,14 @@ class Scanner_Engine {
 
 		$scan_id = $wpdb->insert_id;
 
-		// Schedule the actual scan as a one-time cron to run immediately.
-		wp_schedule_single_event( time(), 'sentinel_run_async_scan', array( $scan_id, $scan_type ) );
-
-		// Run synchronously if async is disabled.
-		if ( empty( $this->settings['async_scanning'] ) ) {
+		if ( ! empty( $this->settings['async_scanning'] ) ) {
+			// Schedule the actual scan as a one-time cron to run immediately,
+			// then spawn WP-Cron so it fires even in Docker/CLI environments
+			// without frontend traffic.
+			wp_schedule_single_event( time(), 'sentinel_run_async_scan', array( $scan_id, $scan_type ) );
+			spawn_cron();
+		} else {
+			// Synchronous execution (async disabled or no cron support).
 			$this->run_scan( $scan_type, 'manual', $scan_id );
 		}
 
@@ -181,9 +184,10 @@ class Scanner_Engine {
 			wp_send_json_error( array( 'message' => __( 'Scan not found.', 'wp-sentinel-security' ) ) );
 		}
 
-		// Calculate pseudo-progress based on elapsed time.
-		$elapsed  = time() - strtotime( $scan->started_at );
-		$progress = min( 95, $elapsed * 5 );
+		// Calculate pseudo-progress based on elapsed time (guard against invalid timestamp).
+		$started_ts = strtotime( $scan->started_at );
+		$elapsed    = ( $started_ts && $started_ts <= time() ) ? ( time() - $started_ts ) : 0;
+		$progress   = min( 95, $elapsed * 5 );
 
 		if ( in_array( $scan->status, array( 'completed', 'failed', 'cancelled' ), true ) ) {
 			$progress = 100;
