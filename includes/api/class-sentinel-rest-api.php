@@ -20,7 +20,7 @@ class Sentinel_Rest_Api {
 	 *
 	 * @var string
 	 */
-	const NAMESPACE = 'sentinel/v1';
+	const API_NAMESPACE = 'sentinel/v1';
 
 	/**
 	 * Register REST API routes.
@@ -31,7 +31,7 @@ class Sentinel_Rest_Api {
 		$permission = array( __CLASS__, 'check_permission' );
 
 		register_rest_route(
-			self::NAMESPACE,
+			self::API_NAMESPACE,
 			'/status',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -41,7 +41,7 @@ class Sentinel_Rest_Api {
 		);
 
 		register_rest_route(
-			self::NAMESPACE,
+			self::API_NAMESPACE,
 			'/scans',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -55,7 +55,7 @@ class Sentinel_Rest_Api {
 		);
 
 		register_rest_route(
-			self::NAMESPACE,
+			self::API_NAMESPACE,
 			'/scan',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -68,7 +68,7 @@ class Sentinel_Rest_Api {
 		);
 
 		register_rest_route(
-			self::NAMESPACE,
+			self::API_NAMESPACE,
 			'/vulnerabilities',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -83,7 +83,7 @@ class Sentinel_Rest_Api {
 		);
 
 		register_rest_route(
-			self::NAMESPACE,
+			self::API_NAMESPACE,
 			'/vulnerabilities/(?P<id>\d+)',
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,

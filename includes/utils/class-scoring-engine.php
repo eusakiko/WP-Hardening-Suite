@@ -35,6 +35,10 @@ class Scoring_Engine {
 			OBJECT_K
 		);
 
+		if ( $wpdb->last_error ) {
+			$severity_counts = array();
+		}
+
 		$by_severity = array(
 			'critical' => isset( $severity_counts['critical'] ) ? (int) $severity_counts['critical']->cnt : 0,
 			'high'     => isset( $severity_counts['high'] ) ? (int) $severity_counts['high']->cnt : 0,
@@ -56,6 +60,10 @@ class Scoring_Engine {
 			"SELECT COUNT(*) FROM {$wpdb->prefix}sentinel_hardening_status" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		);
 
+		if ( $wpdb->last_error ) {
+			$hardening_total = 0;
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$hardening_applied = (int) $wpdb->get_var(
 			$wpdb->prepare(
@@ -63,6 +71,10 @@ class Scoring_Engine {
 				'pass'
 			)
 		);
+
+		if ( $wpdb->last_error ) {
+			$hardening_applied = 0;
+		}
 
 		$hardening_ratio = $hardening_total > 0 ? $hardening_applied / $hardening_total : 0;
 		$score          += (int) round( $hardening_ratio * 15 );

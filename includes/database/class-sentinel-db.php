@@ -43,26 +43,20 @@ class Sentinel_DB {
 			$where[]  = 'status = %s';
 			$params[] = sanitize_text_field( $filters['status'] );
 		} else {
-			$where[] = "status = 'open'";
+			$where[]  = 'status = %s';
+			$params[] = 'open';
 		}
 
 		$where_clause = implode( ' AND ', $where );
 
-		if ( ! empty( $params ) ) {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			return $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$wpdb->prefix}sentinel_vulnerabilities WHERE {$where_clause} ORDER BY cvss_score DESC, detected_at DESC",
-					$params
-				)
-			);
-		}
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_results(
-			"SELECT * FROM {$wpdb->prefix}sentinel_vulnerabilities WHERE {$where_clause} ORDER BY cvss_score DESC, detected_at DESC"
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$wpdb->prefix}sentinel_vulnerabilities WHERE {$where_clause} ORDER BY cvss_score DESC, detected_at DESC",
+				$params
+			)
 		);
 	}
 
@@ -133,42 +127,25 @@ class Sentinel_DB {
 		$where_clause = implode( ' AND ', $where );
 		$offset       = ( max( 1, (int) $page ) - 1 ) * absint( $per_page );
 
-		if ( ! empty( $params ) ) {
-			$count_params = $params;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$total = (int) $wpdb->get_var(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->prefix}sentinel_activity_log WHERE {$where_clause}",
-					$count_params
-				)
-			);
+		$count_params = $params;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}sentinel_activity_log WHERE {$where_clause}",
+				$count_params
+			)
+		);
 
-			$query_params   = array_merge( $params, array( absint( $per_page ), $offset ) );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$items = $wpdb->get_results(
-				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$wpdb->prepare(
-					"SELECT * FROM {$wpdb->prefix}sentinel_activity_log WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-					$query_params
-				)
-			);
-		} else {
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$total = (int) $wpdb->get_var(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}sentinel_activity_log WHERE {$where_clause}"
-			);
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$items = $wpdb->get_results(
-				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"SELECT * FROM {$wpdb->prefix}sentinel_activity_log WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d",
-					absint( $per_page ),
-					$offset
-				)
-			);
-		}
+		$query_params = array_merge( $params, array( absint( $per_page ), $offset ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$items = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}sentinel_activity_log WHERE {$where_clause} ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				$query_params
+			)
+		);
 
 		return array(
 			'items' => $items,

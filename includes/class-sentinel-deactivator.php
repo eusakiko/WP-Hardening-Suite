@@ -33,5 +33,9 @@ class Sentinel_Deactivator {
 		foreach ( $cron_hooks as $hook ) {
 			wp_clear_scheduled_hook( $hook );
 		}
+
+		if ( class_exists( 'Sentinel_Cache' ) ) {
+			Sentinel_Cache::flush_all();
+		}
 	}
 }

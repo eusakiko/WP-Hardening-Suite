@@ -37,7 +37,14 @@ require SENTINEL_PLUGIN_DIR . 'admin/views/partials/header.php';
 	<div class="sentinel-stats-grid sentinel-grid-4">
 
 		<div class="sentinel-card sentinel-score-card">
-			<div class="sentinel-score-circle" style="--score-color: <?php echo esc_attr( $score['grade_color'] ); ?>">
+			<div class="sentinel-score-circle" style="--score-color: <?php
+			// Validate as 6-character hex color; score_to_grade() always returns 6-char colors.
+			$color = $score['grade_color'];
+			if ( ! preg_match( '/^#[0-9a-fA-F]{6}$/', $color ) ) {
+				$color = '#6c757d';
+			}
+			echo esc_attr( $color );
+		?>">
 				<span class="sentinel-score-value"><?php echo esc_html( $score['score'] ); ?></span>
 				<span class="sentinel-score-grade"><?php echo esc_html( $score['grade'] ); ?></span>
 			</div>

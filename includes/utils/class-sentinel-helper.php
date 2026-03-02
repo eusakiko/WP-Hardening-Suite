@@ -26,24 +26,28 @@ class Sentinel_Helper {
 	 * @return string Client IP address.
 	 */
 	public static function get_client_ip() {
-		$headers = array(
-			'HTTP_CF_CONNECTING_IP',
-			'HTTP_X_FORWARDED_FOR',
-			'HTTP_X_REAL_IP',
-			'REMOTE_ADDR',
-		);
+		$settings    = get_option( 'sentinel_settings', array() );
+		$trust_proxy = ! empty( $settings['trust_proxy_headers'] );
 
-		foreach ( $headers as $header ) {
-			if ( ! empty( $_SERVER[ $header ] ) ) {
-				// X-Forwarded-For may contain multiple IPs; take the first.
-				$ip = trim( explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) ) )[0] );
-				if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-					return $ip;
+		if ( $trust_proxy ) {
+			$proxy_headers = array(
+				'HTTP_CF_CONNECTING_IP',
+				'HTTP_X_FORWARDED_FOR',
+				'HTTP_X_REAL_IP',
+			);
+			foreach ( $proxy_headers as $header ) {
+				if ( ! empty( $_SERVER[ $header ] ) ) {
+					$ip = trim( explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) ) )[0] );
+					if ( filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+						return $ip;
+					}
 				}
 			}
 		}
 
-		return '0.0.0.0';
+		return isset( $_SERVER['REMOTE_ADDR'] )
+			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
+			: '0.0.0.0';
 	}
 
 	/**
