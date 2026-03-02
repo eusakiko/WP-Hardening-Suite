@@ -152,12 +152,23 @@ class Sentinel_Core {
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-email.php';
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-slack.php';
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-telegram.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-discord.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-webhook.php';
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-engine.php';
 		$this->modules['alerts'] = new Alert_Engine( $this->settings );
 
 		// Activity logger.
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/activity/class-activity-logger.php';
 		$this->modules['activity'] = new Activity_Logger();
+
+		// Firewall (WAF) module.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/firewall/class-ip-manager.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/firewall/class-firewall-engine.php';
+		$this->modules['firewall'] = new Firewall_Engine( $this->settings );
+
+		// Two-factor authentication module.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/auth/class-two-factor-auth.php';
+		$this->modules['two_factor'] = new Two_Factor_Auth( $this->settings );
 	}
 
 	/**
@@ -189,6 +200,11 @@ class Sentinel_Core {
 		if ( is_admin() ) {
 			$admin = new Sentinel_Admin( $this->settings );
 			$admin->register();
+		}
+
+		// WP-CLI commands.
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			require_once SENTINEL_PLUGIN_DIR . 'includes/cli/class-sentinel-cli.php';
 		}
 	}
 

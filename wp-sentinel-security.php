@@ -100,6 +100,14 @@ spl_autoload_register(
 			// API.
 			'Sentinel_Rest_Api'    => 'api/class-sentinel-rest-api.php',
 			'Vulnerability_Feed'   => 'api/class-vulnerability-feed.php',
+			// Firewall (WAF).
+			'Firewall_Engine'      => 'modules/firewall/class-firewall-engine.php',
+			'IP_Manager'           => 'modules/firewall/class-ip-manager.php',
+			// Authentication.
+			'Two_Factor_Auth'      => 'modules/auth/class-two-factor-auth.php',
+			// Alert channels.
+			'Alert_Discord'        => 'modules/alerts/class-alert-discord.php',
+			'Alert_Webhook'        => 'modules/alerts/class-alert-webhook.php',
 		);
 
 		if ( isset( $class_map[ $class ] ) ) {
