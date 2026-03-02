@@ -113,10 +113,10 @@ require SENTINEL_PLUGIN_DIR . 'admin/views/partials/header.php';
 		<!-- Severity filter tabs -->
 		<div class="sentinel-filter-tabs">
 			<button class="sentinel-tab active" data-filter="all"><?php esc_html_e( 'All', 'wp-sentinel-security' ); ?></button>
-			<button class="sentinel-tab sentinel-tab-critical" data-filter="critical"><?php esc_html_e( 'Critical', 'wp-sentinel-security' ); ?></button>
-			<button class="sentinel-tab sentinel-tab-high" data-filter="high"><?php esc_html_e( 'High', 'wp-sentinel-security' ); ?></button>
-			<button class="sentinel-tab sentinel-tab-medium" data-filter="medium"><?php esc_html_e( 'Medium', 'wp-sentinel-security' ); ?></button>
-			<button class="sentinel-tab sentinel-tab-low" data-filter="low"><?php esc_html_e( 'Low', 'wp-sentinel-security' ); ?></button>
+			<button class="sentinel-tab sentinel-tab-critical" data-filter="critical"><?php esc_html_e( 'Critical (Do today)', 'wp-sentinel-security' ); ?></button>
+			<button class="sentinel-tab sentinel-tab-high" data-filter="high"><?php esc_html_e( 'High (Within 48h)', 'wp-sentinel-security' ); ?></button>
+			<button class="sentinel-tab sentinel-tab-medium" data-filter="medium"><?php esc_html_e( 'Medium (This week)', 'wp-sentinel-security' ); ?></button>
+			<button class="sentinel-tab sentinel-tab-low" data-filter="low"><?php esc_html_e( 'Low (Monitor)', 'wp-sentinel-security' ); ?></button>
 			<button class="sentinel-tab sentinel-tab-info" data-filter="info"><?php esc_html_e( 'Info', 'wp-sentinel-security' ); ?></button>
 		</div>
 

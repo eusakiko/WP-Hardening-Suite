@@ -123,6 +123,118 @@ class Scoring_Engine {
 	}
 
 	/**
+	 * Get the overall risk level label and color for a given score.
+	 *
+	 * Maps a numeric security score to a human-readable risk level.
+	 *
+	 * @param int $score Numeric score (0-100).
+	 * @return array {level: string, label: string, color: string}
+	 */
+	public static function get_risk_level( $score ) {
+		if ( $score >= 70 ) {
+			return array( 'level' => 'low',      'label' => __( 'Low',      'wp-sentinel-security' ), 'color' => '#16a34a' );
+		} elseif ( $score >= 50 ) {
+			return array( 'level' => 'medium',   'label' => __( 'Medium',   'wp-sentinel-security' ), 'color' => '#ca8a04' );
+		} elseif ( $score >= 30 ) {
+			return array( 'level' => 'high',     'label' => __( 'High',     'wp-sentinel-security' ), 'color' => '#ea580c' );
+		} else {
+			return array( 'level' => 'critical', 'label' => __( 'Critical', 'wp-sentinel-security' ), 'color' => '#dc2626' );
+		}
+	}
+
+	/**
+	 * Generate up to 3 top recommended actions from current score data.
+	 *
+	 * Rules are evaluated in priority order; the first three matched are
+	 * returned. Each item contains display text, a sentinel admin page slug,
+	 * and a call-to-action label.
+	 *
+	 * @param array $score    Score array returned by calculate_site_score().
+	 * @param bool  $has_scan Whether at least one scan has completed.
+	 * @return array[] Each element: {text: string, page: string, cta: string}
+	 */
+	public static function get_top_recommendations( array $score, $has_scan = true ) {
+		$recs = array();
+
+		if ( ! $has_scan ) {
+			$recs[] = array(
+				'text' => __( 'Run your first security scan to discover vulnerabilities.', 'wp-sentinel-security' ),
+				'page' => 'sentinel-scanner',
+				'cta'  => __( 'Go to Scanner', 'wp-sentinel-security' ),
+			);
+		}
+
+		if ( $score['by_severity']['critical'] > 0 ) {
+			$recs[] = array(
+				/* translators: %d: number of critical vulnerabilities */
+				'text' => sprintf(
+					_n(
+						'Fix %d critical vulnerability immediately to prevent a breach.',
+						'Fix %d critical vulnerabilities immediately to prevent a breach.',
+						$score['by_severity']['critical'],
+						'wp-sentinel-security'
+					),
+					$score['by_severity']['critical']
+				),
+				'page' => 'sentinel-scanner',
+				'cta'  => __( 'View Findings', 'wp-sentinel-security' ),
+			);
+		}
+
+		if ( $score['by_severity']['high'] > 0 ) {
+			$recs[] = array(
+				/* translators: %d: number of high-severity vulnerabilities */
+				'text' => sprintf(
+					_n(
+						'Address %d high-severity vulnerability within 48 hours.',
+						'Address %d high-severity vulnerabilities within 48 hours.',
+						$score['by_severity']['high'],
+						'wp-sentinel-security'
+					),
+					$score['by_severity']['high']
+				),
+				'page' => 'sentinel-scanner',
+				'cta'  => __( 'View Findings', 'wp-sentinel-security' ),
+			);
+		}
+
+		if ( count( $recs ) < 3 && $score['hardening_percentage'] < 50 ) {
+			$recs[] = array(
+				'text' => __( 'Apply hardening measures to strengthen your security posture.', 'wp-sentinel-security' ),
+				'page' => 'sentinel-hardening',
+				'cta'  => __( 'Go to Hardening', 'wp-sentinel-security' ),
+			);
+		}
+
+		if ( count( $recs ) < 3 && $score['by_severity']['medium'] > 0 ) {
+			$recs[] = array(
+				/* translators: %d: number of medium-severity vulnerabilities */
+				'text' => sprintf(
+					_n(
+						'Review %d medium-severity vulnerability this week.',
+						'Review %d medium-severity vulnerabilities this week.',
+						$score['by_severity']['medium'],
+						'wp-sentinel-security'
+					),
+					$score['by_severity']['medium']
+				),
+				'page' => 'sentinel-scanner',
+				'cta'  => __( 'View Findings', 'wp-sentinel-security' ),
+			);
+		}
+
+		if ( empty( $recs ) ) {
+			$recs[] = array(
+				'text' => __( 'Your site is well-secured. Keep monitoring with regular scans.', 'wp-sentinel-security' ),
+				'page' => 'sentinel-scanner',
+				'cta'  => __( 'Run Scan', 'wp-sentinel-security' ),
+			);
+		}
+
+		return array_slice( $recs, 0, 3 );
+	}
+
+	/**
 	 * Get score history averaged per day over the past N days.
 	 *
 	 * @param int $days Number of days of history to retrieve.
