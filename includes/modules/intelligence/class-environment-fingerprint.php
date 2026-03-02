@@ -193,7 +193,14 @@ class Environment_Fingerprint {
 		// Control panel detection.
 		$cpanel  = file_exists( '/usr/local/cpanel/cpanel' ) || file_exists( '/etc/cpanel' );
 		$plesk   = file_exists( '/opt/psa/version' ) || file_exists( '/usr/local/psa/version' );
-		$docker  = file_exists( '/.dockerenv' ) || ( file_exists( '/proc/1/cgroup' ) && false !== strpos( (string) file_get_contents( '/proc/1/cgroup' ), 'docker' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		// Docker detection: check for .dockerenv first (fast), then /proc/1/cgroup (with limited read).
+		$docker = file_exists( '/.dockerenv' );
+		if ( ! $docker && file_exists( '/proc/1/cgroup' ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$cgroup_content = @file_get_contents( '/proc/1/cgroup', false, null, 0, 1024 );
+			$docker         = false !== $cgroup_content && false !== strpos( $cgroup_content, 'docker' );
+		}
 
 		// CDN / WAF detection from incoming HTTP headers.
 		$cf_ray    = isset( $_SERVER['HTTP_CF_RAY'] ) || isset( $_SERVER['HTTP_CF_CONNECTING_IP'] );

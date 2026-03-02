@@ -112,6 +112,8 @@ class Attack_Surface_Mapper {
 
 		$result = array();
 		foreach ( $files as $label => $url ) {
+			// sslverify intentionally false: scanning the site's own URLs which may use
+			// self-signed or locally-terminated TLS certificates.
 			$response   = wp_remote_head( $url, array( 'timeout' => 8, 'sslverify' => false ) );
 			$code       = is_wp_error( $response ) ? 0 : wp_remote_retrieve_response_code( $response );
 			$accessible = in_array( (int) $code, array( 200, 301, 302 ), true );
@@ -147,12 +149,14 @@ class Attack_Surface_Mapper {
 	private function get_xmlrpc_info() {
 		$xmlrpc_url = site_url( '/xmlrpc.php' );
 
+		// sslverify intentionally false: scanning the site's own endpoint which may use
+		// self-signed or locally-terminated TLS certificates.
 		$response = wp_remote_post(
 			$xmlrpc_url,
 			array(
-				'timeout' => 8,
-				'body'    => '<?xml version="1.0"?><methodCall><methodName>system.listMethods</methodName><params></params></methodCall>',
-				'headers' => array( 'Content-Type' => 'text/xml' ),
+				'timeout'   => 8,
+				'body'      => '<?xml version="1.0"?><methodCall><methodName>system.listMethods</methodName><params></params></methodCall>',
+				'headers'   => array( 'Content-Type' => 'text/xml' ),
 				'sslverify' => false,
 			)
 		);
@@ -190,7 +194,7 @@ class Attack_Surface_Mapper {
 			'author_enum_exposed'  => false,
 		);
 
-		// Check REST /wp/v2/users.
+		// Check REST /wp/v2/users — sslverify false for same-site self-checks.
 		$rest_url = rest_url( 'wp/v2/users' );
 		$response = wp_remote_get( $rest_url, array( 'timeout' => 8, 'sslverify' => false ) );
 
