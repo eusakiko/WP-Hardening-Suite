@@ -12,14 +12,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 $current_page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : 'sentinel-security'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 $nav_items = array(
-	'sentinel-security'  => __( 'Dashboard', 'wp-sentinel-security' ),
-	'sentinel-scanner'   => __( 'Scanner', 'wp-sentinel-security' ),
-	'sentinel-hardening' => __( 'Hardening', 'wp-sentinel-security' ),
-	'sentinel-backups'   => __( 'Backups', 'wp-sentinel-security' ),
-	'sentinel-reports'   => __( 'Reports', 'wp-sentinel-security' ),
-	'sentinel-alerts'    => __( 'Alerts', 'wp-sentinel-security' ),
-	'sentinel-activity'  => __( 'Activity', 'wp-sentinel-security' ),
-	'sentinel-settings'  => __( 'Settings', 'wp-sentinel-security' ),
+	'sentinel-security'      => __( 'Dashboard', 'wp-sentinel-security' ),
+	'sentinel-scanner'       => __( 'Scanner', 'wp-sentinel-security' ),
+	'sentinel-hardening'     => __( 'Hardening', 'wp-sentinel-security' ),
+	'sentinel-backups'       => __( 'Backups', 'wp-sentinel-security' ),
+	'sentinel-reports'       => __( 'Reports', 'wp-sentinel-security' ),
+	'sentinel-alerts'        => __( 'Alerts', 'wp-sentinel-security' ),
+	'sentinel-activity'      => __( 'Activity', 'wp-sentinel-security' ),
+	'sentinel-intelligence'  => __( 'Intelligence', 'wp-sentinel-security' ),
+	'sentinel-settings'      => __( 'Settings', 'wp-sentinel-security' ),
 );
 ?>
 

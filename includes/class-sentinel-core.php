@@ -123,6 +123,9 @@ class Sentinel_Core {
 	private function register_modules() {
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/scanner/class-scanner-engine.php';
 		$this->modules['scanner'] = new Scanner_Engine( $this->settings );
+
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/intelligence/class-intelligence-engine.php';
+		$this->modules['intelligence'] = new Intelligence_Engine( $this->settings );
 	}
 
 	/**
