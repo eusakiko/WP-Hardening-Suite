@@ -197,10 +197,16 @@ class Sentinel_Admin {
 			true
 		);
 
-		// Chart.js from CDN.
+		// Chart.js — prefer local vendor copy, fall back to CDN.
+		$local_chartjs = SENTINEL_PLUGIN_DIR . 'admin/js/vendor/chart.umd.min.js';
+		if ( file_exists( $local_chartjs ) ) {
+			$chartjs_url = SENTINEL_PLUGIN_URL . 'admin/js/vendor/chart.umd.min.js';
+		} else {
+			$chartjs_url = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+		}
 		wp_enqueue_script(
 			'chartjs',
-			'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
+			$chartjs_url,
 			array(),
 			'4.4.0',
 			true
@@ -241,6 +247,7 @@ class Sentinel_Admin {
 					'hardening'    => wp_create_nonce( 'sentinel_hardening_nonce' ),
 					'report'       => wp_create_nonce( 'sentinel_report_nonce' ),
 					'alert'        => wp_create_nonce( 'sentinel_alert_nonce' ),
+					'rest'         => wp_create_nonce( 'wp_rest' ), // BUG FIX: REST API nonce.
 				),
 				'i18n'     => array(
 					'scanning'           => __( 'Scanning...', 'wp-sentinel-security' ),
@@ -293,7 +300,7 @@ class Sentinel_Admin {
 	public function sanitize_settings( $input ) {
 		$output = array();
 
-		$output['scan_frequency']       = in_array( $input['scan_frequency'] ?? '', array( 'hourly', 'twicedaily', 'daily', 'weekly' ), true )
+		$output['scan_frequency']       = in_array( $input['scan_frequency'] ?? '', array( 'hourly', 'twicedaily', 'daily', 'weekly', 'monthly' ), true )
 			? $input['scan_frequency']
 			: 'daily';
 		$output['backup_before_action'] = ! empty( $input['backup_before_action'] );

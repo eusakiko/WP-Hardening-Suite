@@ -238,7 +238,7 @@ $steps = array(
 				<p><?php esc_html_e( 'Automated scans keep you protected around the clock. Choose your preferred scan frequency.', 'wp-sentinel-security' ); ?></p>
 
 				<form method="post" action="options.php">
-					<?php settings_fields( 'sentinel_settings' ); ?>
+					<?php settings_fields( 'sentinel_settings_group' ); ?>
 					<input type="hidden" name="sentinel_settings[wizard_completed]" value="1" />
 
 					<div class="sentinel-wizard-schedule-options">
