@@ -169,6 +169,20 @@ class Sentinel_Core {
 		// Two-factor authentication module.
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/auth/class-two-factor-auth.php';
 		$this->modules['two_factor'] = new Two_Factor_Auth( $this->settings );
+
+		// Firewall extensions: lockdown mode.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/firewall/class-lockdown.php';
+		$this->modules['lockdown'] = new Sentinel_Lockdown( $this->settings );
+
+		// Intelligence extensions.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/intelligence/class-ip-reputation.php';
+		$this->modules['ip_reputation'] = new IP_Reputation( $this->settings, $this->modules['firewall']->get_ip_manager() );
+
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/intelligence/class-vulnerability-feed-aggregator.php';
+		$this->modules['vuln_feed'] = new Vulnerability_Feed_Aggregator( $this->settings );
+
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/intelligence/class-blacklist-monitor.php';
+		$this->modules['blacklist_monitor'] = new Blacklist_Monitor( $this->settings );
 	}
 
 	/**

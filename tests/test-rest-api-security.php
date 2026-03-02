@@ -44,6 +44,13 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+if ( ! function_exists( 'absint' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
+	function absint( $val ) {
+		return abs( (int) $val );
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Minimal class stubs required by Sentinel_Rest_Api.
 // ---------------------------------------------------------------------------

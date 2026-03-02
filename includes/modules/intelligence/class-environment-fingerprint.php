@@ -115,6 +115,15 @@ class Environment_Fingerprint {
 	private function get_database_info() {
 		global $wpdb;
 
+		if ( ! isset( $wpdb ) || ! $wpdb ) {
+			return array(
+				'version' => 'unknown',
+				'type'    => 'unknown',
+				'charset' => 'unknown',
+				'prefix'  => 'unknown',
+			);
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$db_version = $wpdb->get_var( 'SELECT VERSION()' );
 
