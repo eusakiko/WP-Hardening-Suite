@@ -48,8 +48,8 @@ class Sentinel_Rest_Api {
 				'callback'            => array( __CLASS__, 'get_scans' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'page'     => array( 'type' => 'integer', 'default' => 1 ),
-					'per_page' => array( 'type' => 'integer', 'default' => 20 ),
+					'page'     => array( 'type' => 'integer', 'default' => 1, 'minimum' => 1 ),
+					'per_page' => array( 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ),
 				),
 			)
 		);
@@ -62,7 +62,12 @@ class Sentinel_Rest_Api {
 				'callback'            => array( __CLASS__, 'start_scan' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'scan_type' => array( 'type' => 'string', 'default' => 'quick' ),
+					'scan_type' => array(
+						'type'              => 'string',
+						'default'           => 'quick',
+						'enum'              => array( 'quick', 'full', 'malware', 'integrity' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
 				),
 			)
 		);
@@ -75,9 +80,21 @@ class Sentinel_Rest_Api {
 				'callback'            => array( __CLASS__, 'get_vulnerabilities' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'severity'       => array( 'type' => 'string' ),
-					'component_type' => array( 'type' => 'string' ),
-					'status'         => array( 'type' => 'string' ),
+					'severity'       => array(
+						'type'              => 'string',
+						'enum'              => array( 'critical', 'high', 'medium', 'low', 'info' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
+					'component_type' => array(
+						'type'              => 'string',
+						'enum'              => array( 'plugin', 'theme', 'wordpress', 'other' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
+					'status'         => array(
+						'type'              => 'string',
+						'enum'              => array( 'open', 'fixed', 'ignored', 'false_positive' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
 				),
 			)
 		);
@@ -147,8 +164,8 @@ class Sentinel_Rest_Api {
 					'callback'            => array( __CLASS__, 'get_backups' ),
 					'permission_callback' => $permission,
 					'args'                => array(
-						'page'     => array( 'type' => 'integer', 'default' => 1 ),
-						'per_page' => array( 'type' => 'integer', 'default' => 20 ),
+						'page'     => array( 'type' => 'integer', 'default' => 1, 'minimum' => 1 ),
+						'per_page' => array( 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ),
 					),
 				),
 				array(
@@ -157,9 +174,10 @@ class Sentinel_Rest_Api {
 					'permission_callback' => $permission,
 					'args'                => array(
 						'type' => array(
-							'type'    => 'string',
-							'enum'    => array( 'full', 'database', 'files' ),
-							'default' => 'full',
+							'type'              => 'string',
+							'enum'              => array( 'full', 'database', 'files' ),
+							'default'           => 'full',
+							'sanitize_callback' => 'sanitize_key',
 						),
 					),
 				),
@@ -202,8 +220,8 @@ class Sentinel_Rest_Api {
 					'callback'            => array( __CLASS__, 'get_reports' ),
 					'permission_callback' => $permission,
 					'args'                => array(
-						'page'     => array( 'type' => 'integer', 'default' => 1 ),
-						'per_page' => array( 'type' => 'integer', 'default' => 20 ),
+						'page'     => array( 'type' => 'integer', 'default' => 1, 'minimum' => 1 ),
+						'per_page' => array( 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ),
 					),
 				),
 				array(
@@ -211,8 +229,18 @@ class Sentinel_Rest_Api {
 					'callback'            => array( __CLASS__, 'generate_report' ),
 					'permission_callback' => $permission,
 					'args'                => array(
-						'type'   => array( 'type' => 'string', 'default' => 'technical' ),
-						'format' => array( 'type' => 'string', 'default' => 'html' ),
+						'type'   => array(
+							'type'              => 'string',
+							'default'           => 'technical',
+							'enum'              => array( 'technical', 'executive', 'compliance' ),
+							'sanitize_callback' => 'sanitize_key',
+						),
+						'format' => array(
+							'type'              => 'string',
+							'default'           => 'html',
+							'enum'              => array( 'html', 'json', 'csv' ),
+							'sanitize_callback' => 'sanitize_key',
+						),
 					),
 				),
 			)
@@ -240,7 +268,12 @@ class Sentinel_Rest_Api {
 				'callback'            => array( __CLASS__, 'test_alert_channel' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'channel' => array( 'type' => 'string', 'required' => true ),
+					'channel' => array(
+						'type'              => 'string',
+						'required'          => true,
+						'enum'              => array( 'email', 'slack', 'telegram' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
 				),
 			)
 		);
@@ -254,12 +287,16 @@ class Sentinel_Rest_Api {
 				'callback'            => array( __CLASS__, 'get_activity_log' ),
 				'permission_callback' => $permission,
 				'args'                => array(
-					'page'           => array( 'type' => 'integer', 'default' => 1 ),
-					'per_page'       => array( 'type' => 'integer', 'default' => 20 ),
-					'severity'       => array( 'type' => 'string' ),
-					'event_category' => array( 'type' => 'string' ),
-					'date_from'      => array( 'type' => 'string' ),
-					'date_to'        => array( 'type' => 'string' ),
+					'page'           => array( 'type' => 'integer', 'default' => 1, 'minimum' => 1 ),
+					'per_page'       => array( 'type' => 'integer', 'default' => 20, 'minimum' => 1, 'maximum' => 100 ),
+					'severity'       => array(
+						'type'              => 'string',
+						'enum'              => array( 'critical', 'high', 'medium', 'low', 'info' ),
+						'sanitize_callback' => 'sanitize_key',
+					),
+					'event_category' => array( 'type' => 'string', 'sanitize_callback' => 'sanitize_key' ),
+					'date_from'      => array( 'type' => 'string', 'format' => 'date-time', 'sanitize_callback' => 'sanitize_text_field' ),
+					'date_to'        => array( 'type' => 'string', 'format' => 'date-time', 'sanitize_callback' => 'sanitize_text_field' ),
 				),
 			)
 		);
@@ -318,8 +355,10 @@ class Sentinel_Rest_Api {
 	 * @return WP_REST_Response
 	 */
 	public static function get_scans( $request ) {
-		$limit  = absint( $request->get_param( 'per_page' ) ) ?: 20;
-		$scans  = Sentinel_DB::get_scan_history( $limit );
+		$page   = max( 1, absint( $request->get_param( 'page' ) ) );
+		$limit  = min( 100, max( 1, absint( $request->get_param( 'per_page' ) ) ) ) ?: 20;
+		$offset = ( $page - 1 ) * $limit;
+		$scans  = Sentinel_DB::get_scan_history( $limit, $offset );
 
 		return new WP_REST_Response( $scans, 200 );
 	}
@@ -331,7 +370,12 @@ class Sentinel_Rest_Api {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public static function start_scan( $request ) {
-		$scan_type = sanitize_text_field( $request->get_param( 'scan_type' ) ?: 'quick' );
+		$allowed_types = array( 'quick', 'full', 'malware', 'integrity' );
+		$scan_type     = sanitize_key( $request->get_param( 'scan_type' ) ?: 'quick' );
+
+		if ( ! in_array( $scan_type, $allowed_types, true ) ) {
+			return new WP_Error( 'invalid_scan_type', __( 'Invalid scan type.', 'wp-sentinel-security' ), array( 'status' => 400 ) );
+		}
 
 		if ( ! class_exists( 'Scanner_Engine' ) ) {
 			require_once SENTINEL_PLUGIN_DIR . 'includes/modules/scanner/class-scanner-engine.php';
@@ -377,10 +421,15 @@ class Sentinel_Rest_Api {
 		global $wpdb;
 
 		$id     = absint( $request->get_param( 'id' ) );
-		$status = sanitize_text_field( $request->get_param( 'status' ) );
+		$status = sanitize_key( $request->get_param( 'status' ) );
 
 		if ( ! $id ) {
 			return new WP_Error( 'invalid_id', __( 'Invalid vulnerability ID.', 'wp-sentinel-security' ), array( 'status' => 400 ) );
+		}
+
+		$allowed_statuses = array( 'open', 'fixed', 'ignored', 'false_positive' );
+		if ( ! in_array( $status, $allowed_statuses, true ) ) {
+			return new WP_Error( 'invalid_status', __( 'Invalid vulnerability status.', 'wp-sentinel-security' ), array( 'status' => 400 ) );
 		}
 
 		$update_data = array( 'status' => $status );
@@ -612,6 +661,10 @@ class Sentinel_Rest_Api {
 		global $wpdb;
 
 		$id = absint( $request->get_param( 'id' ) );
+
+		if ( ! $id ) {
+			return new WP_Error( 'invalid_id', __( 'Invalid report ID.', 'wp-sentinel-security' ), array( 'status' => 400 ) );
+		}
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$report = $wpdb->get_row(
