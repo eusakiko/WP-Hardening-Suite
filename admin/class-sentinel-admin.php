@@ -205,6 +205,7 @@ class Sentinel_Admin {
 					'restore'      => wp_create_nonce( 'sentinel_restore_nonce' ),
 					'delete'       => wp_create_nonce( 'sentinel_delete_nonce' ),
 					'intelligence' => wp_create_nonce( 'sentinel_intelligence_nonce' ),
+					'hardening'    => wp_create_nonce( 'sentinel_hardening_nonce' ),
 				),
 				'i18n'     => array(
 					'scanning'          => __( 'Scanning...', 'wp-sentinel-security' ),
@@ -310,9 +311,22 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_hardening() {
-		$hardening = Sentinel_DB::get_hardening_status();
-		echo '<div class="wrap"><h1>' . esc_html__( 'Hardening Status', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Run a configuration scan to populate hardening checks.', 'wp-sentinel-security' ) . '</p></div>';
+		$hardening_dir = SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/';
+
+		require_once $hardening_dir . 'class-file-hardening.php';
+		require_once $hardening_dir . 'class-wp-config-hardening.php';
+		require_once $hardening_dir . 'class-user-hardening.php';
+		require_once $hardening_dir . 'class-database-hardening.php';
+		require_once $hardening_dir . 'class-api-hardening.php';
+		require_once $hardening_dir . 'class-hardening-engine.php';
+
+		$engine = new Hardening_Engine( $this->settings );
+		$engine->init();
+
+		$checks = $engine->get_all_checks();
+		$score  = $engine->get_hardening_score();
+
+		require SENTINEL_PLUGIN_DIR . 'admin/views/hardening.php';
 	}
 
 	/**
