@@ -51,11 +51,15 @@ class Alert_Engine {
 		require_once $base . 'class-alert-email.php';
 		require_once $base . 'class-alert-slack.php';
 		require_once $base . 'class-alert-telegram.php';
+		require_once $base . 'class-alert-discord.php';
+		require_once $base . 'class-alert-webhook.php';
 
 		$this->channels = array(
 			'email'    => new Alert_Email( $this->settings ),
 			'slack'    => new Alert_Slack( $this->settings ),
 			'telegram' => new Alert_Telegram( $this->settings ),
+			'discord'  => new Alert_Discord( $this->settings ),
+			'webhook'  => new Alert_Webhook( $this->settings ),
 		);
 
 		add_action( 'wp_ajax_sentinel_test_alert',    array( $this, 'ajax_test_alert' ) );
