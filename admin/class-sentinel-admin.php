@@ -166,6 +166,23 @@ class Sentinel_Admin {
 			SENTINEL_VERSION
 		);
 
+		// Reports CSS.
+		wp_enqueue_style(
+			'sentinel-reports',
+			SENTINEL_PLUGIN_URL . 'admin/css/sentinel-reports.css',
+			array( 'sentinel-admin' ),
+			SENTINEL_VERSION
+		);
+
+		// Intelligence JS.
+		wp_enqueue_script(
+			'sentinel-intelligence',
+			SENTINEL_PLUGIN_URL . 'admin/js/sentinel-intelligence.js',
+			array( 'sentinel-admin' ),
+			SENTINEL_VERSION,
+			true
+		);
+
 		// Chart.js from CDN.
 		wp_enqueue_script(
 			'chartjs',
@@ -206,6 +223,8 @@ class Sentinel_Admin {
 					'delete'       => wp_create_nonce( 'sentinel_delete_nonce' ),
 					'intelligence' => wp_create_nonce( 'sentinel_intelligence_nonce' ),
 					'hardening'    => wp_create_nonce( 'sentinel_hardening_nonce' ),
+					'report'       => wp_create_nonce( 'sentinel_report_nonce' ),
+					'alert'        => wp_create_nonce( 'sentinel_alert_nonce' ),
 				),
 				'i18n'     => array(
 					'scanning'          => __( 'Scanning...', 'wp-sentinel-security' ),
@@ -352,8 +371,11 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_reports() {
-		echo '<div class="wrap"><h1>' . esc_html__( 'Reports', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Report generation coming soon.', 'wp-sentinel-security' ) . '</p></div>';
+		$engine       = new Report_Engine( $this->settings );
+		$report_data  = $engine->get_reports( 1, 20 );
+		$reports      = $report_data['items'];
+		$report_count = $report_data['total'];
+		require SENTINEL_PLUGIN_DIR . 'admin/views/reports.php';
 	}
 
 	/**
@@ -362,8 +384,10 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_alerts() {
-		echo '<div class="wrap"><h1>' . esc_html__( 'Alerts', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Alert configuration coming soon.', 'wp-sentinel-security' ) . '</p></div>';
+		$settings   = $this->settings;
+		$alert_data = Sentinel_DB::get_activity_log( array( 'event_category' => 'alert' ), 1, 20 );
+		$alerts     = $alert_data['items'];
+		require SENTINEL_PLUGIN_DIR . 'admin/views/alerts.php';
 	}
 
 	/**
@@ -374,16 +398,7 @@ class Sentinel_Admin {
 	public function render_activity() {
 		$page     = isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$log_data = Sentinel_DB::get_activity_log( array(), $page, 20 );
-		echo '<div class="wrap"><h1>' . esc_html__( 'Activity Log', 'wp-sentinel-security' ) . '</h1>';
-		echo '<table class="wp-list-table widefat fixed striped"><thead><tr><th>' . esc_html__( 'Date', 'wp-sentinel-security' ) . '</th><th>' . esc_html__( 'Event', 'wp-sentinel-security' ) . '</th><th>' . esc_html__( 'Severity', 'wp-sentinel-security' ) . '</th><th>' . esc_html__( 'Description', 'wp-sentinel-security' ) . '</th></tr></thead><tbody>';
-		if ( ! empty( $log_data['items'] ) ) {
-			foreach ( $log_data['items'] as $entry ) {
-				echo '<tr><td>' . esc_html( $entry->created_at ) . '</td><td>' . esc_html( $entry->event_type ) . '</td><td>' . esc_html( $entry->severity ) . '</td><td>' . esc_html( $entry->description ) . '</td></tr>';
-			}
-		} else {
-			echo '<tr><td colspan="4">' . esc_html__( 'No activity recorded yet.', 'wp-sentinel-security' ) . '</td></tr>';
-		}
-		echo '</tbody></table></div>';
+		require SENTINEL_PLUGIN_DIR . 'admin/views/activity.php';
 	}
 
 	/**

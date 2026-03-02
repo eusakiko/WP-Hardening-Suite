@@ -4,7 +4,7 @@ Tags: security, vulnerability, malware, hardening, scanner
 Requires at least: 5.8
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -71,6 +71,22 @@ Yes. WP Sentinel Security is fully compatible with WordPress Multisite installat
 4. Settings page
 
 == Changelog ==
+
+= 2.0.0 =
+* Phase 3 — Hardening Engine: 24 hardening checks across 6 categories (file security, wp-config, server, user, database, API)
+* Phase 3 — File Hardening: disable file editing, block PHP in uploads, protect wp-config and .htaccess, add security headers
+* Phase 3 — WP-Config Hardening: force SSL admin, disable debug in production, limit revisions, disable file editor
+* Phase 3 — User Hardening: block user enumeration, enforce strong passwords, limit login attempts, hide WP version
+* Phase 3 — Database Hardening: audit table prefix, database privileges, and password strength
+* Phase 3 — API Hardening: disable XML-RPC, restrict REST API, disable oEmbed, disable pingbacks
+* Phase 4 — Backup System: full/database/files backup with ZIP and SQL export, SHA-256 checksums, restore and delete
+* Phase 4 — Backup Engine: progress tracking via transients, AJAX polling, backup history management
+* Phase 5 — Report Engine: technical, executive, and compliance reports in HTML, JSON, and CSV formats
+* Phase 5 — Report HTML Renderer: standalone HTML reports with inline CSS, print-ready styling, and branding support
+* Phase 5 — Alert Engine: email, Slack, and Telegram alert channels with 1-hour throttling and 7 event types
+* Phase 5 — Activity Logger: logs 12 security-relevant WordPress events to the activity log
+* Phase 5 — New admin views: Hardening, Backups, Reports, Alerts, Activity Log
+* Version bump to 2.0.0
 
 = 1.0.0 =
 * Initial release

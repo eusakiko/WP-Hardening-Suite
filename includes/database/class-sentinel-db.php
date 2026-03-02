@@ -185,4 +185,201 @@ class Sentinel_DB {
 			)
 		);
 	}
+
+	/**
+	 * Log an activity event.
+	 *
+	 * @param array $data Event data.
+	 * @return int|false Insert ID or false on error.
+	 */
+	public static function log_activity( $data ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			"{$wpdb->prefix}sentinel_activity_log",
+			array(
+				'user_id'        => absint( $data['user_id'] ?? get_current_user_id() ),
+				'event_type'     => sanitize_text_field( $data['event_type'] ?? '' ),
+				'event_category' => sanitize_text_field( $data['event_category'] ?? '' ),
+				'severity'       => sanitize_text_field( $data['severity'] ?? 'info' ),
+				'description'    => sanitize_text_field( $data['description'] ?? '' ),
+				'ip_address'     => sanitize_text_field( $data['ip_address'] ?? '' ),
+				'user_agent'     => sanitize_text_field( $data['user_agent'] ?? '' ),
+				'object_type'    => sanitize_text_field( $data['object_type'] ?? '' ),
+				'object_id'      => sanitize_text_field( $data['object_id'] ?? '' ),
+				'metadata'       => wp_json_encode( $data['metadata'] ?? array() ),
+				'created_at'     => current_time( 'mysql' ),
+			),
+			array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
+		);
+		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Get reports with pagination.
+	 *
+	 * @param int $page     Page number.
+	 * @param int $per_page Results per page.
+	 * @return array
+	 */
+	public static function get_reports( $page = 1, $per_page = 20 ) {
+		global $wpdb;
+		$offset = ( max( 1, (int) $page ) - 1 ) * absint( $per_page );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}sentinel_reports" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}sentinel_reports ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				absint( $per_page ),
+				$offset
+			)
+		);
+		return array(
+			'items' => $items,
+			'total' => $total,
+			'pages' => (int) ceil( $total / max( 1, $per_page ) ),
+		);
+	}
+
+	/**
+	 * Save a report record.
+	 *
+	 * @param array $data Report data.
+	 * @return int|false Insert ID or false on error.
+	 */
+	public static function save_report( $data ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			"{$wpdb->prefix}sentinel_reports",
+			array(
+				'report_type'     => sanitize_text_field( $data['report_type'] ?? 'full' ),
+				'title'           => sanitize_text_field( $data['title'] ?? '' ),
+				'format'          => sanitize_text_field( $data['format'] ?? 'html' ),
+				'file_path'       => sanitize_text_field( $data['file_path'] ?? '' ),
+				'scan_ids'        => wp_json_encode( $data['scan_ids'] ?? array() ),
+				'branding_config' => wp_json_encode( $data['branding_config'] ?? array() ),
+				'generated_by'    => absint( $data['generated_by'] ?? get_current_user_id() ),
+				'created_at'      => current_time( 'mysql' ),
+			),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+		);
+		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Delete a report record.
+	 *
+	 * @param int $id Report ID.
+	 * @return int|false Rows deleted or false on error.
+	 */
+	public static function delete_report( $id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->delete(
+			"{$wpdb->prefix}sentinel_reports",
+			array( 'id' => absint( $id ) ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Get vulnerability summary by severity.
+	 *
+	 * @return array Associative array of severity => count.
+	 */
+	public static function get_vulnerability_summary() {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT severity, COUNT(*) as count FROM {$wpdb->prefix}sentinel_vulnerabilities WHERE status = %s GROUP BY severity",
+				'open'
+			)
+		);
+		$summary = array( 'critical' => 0, 'high' => 0, 'medium' => 0, 'low' => 0, 'info' => 0 );
+		foreach ( $rows as $row ) {
+			$summary[ $row->severity ] = (int) $row->count;
+		}
+		return $summary;
+	}
+
+	/**
+	 * Get backup list with pagination.
+	 *
+	 * @param int $page     Page number.
+	 * @param int $per_page Results per page.
+	 * @return array
+	 */
+	public static function get_backup_list( $page = 1, $per_page = 20 ) {
+		global $wpdb;
+		$offset = ( max( 1, (int) $page ) - 1 ) * absint( $per_page );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}sentinel_backups WHERE status != %s",
+				'deleted'
+			)
+		);
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$wpdb->prefix}sentinel_backups WHERE status != %s ORDER BY created_at DESC LIMIT %d OFFSET %d",
+				'deleted',
+				absint( $per_page ),
+				$offset
+			)
+		);
+		return array(
+			'items' => $items,
+			'total' => $total,
+			'pages' => (int) ceil( $total / max( 1, $per_page ) ),
+		);
+	}
+
+	/**
+	 * Save a backup record.
+	 *
+	 * @param array $data Backup data.
+	 * @return int|false Insert ID or false on error.
+	 */
+	public static function save_backup( $data ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$result = $wpdb->insert(
+			"{$wpdb->prefix}sentinel_backups",
+			array(
+				'backup_type'      => sanitize_text_field( $data['backup_type'] ?? 'full' ),
+				'file_path'        => sanitize_text_field( $data['file_path'] ?? '' ),
+				'file_size'        => absint( $data['file_size'] ?? 0 ),
+				'storage_location' => 'local',
+				'status'           => sanitize_text_field( $data['status'] ?? 'completed' ),
+				'checksum'         => sanitize_text_field( $data['checksum'] ?? '' ),
+				'notes'            => sanitize_text_field( $data['notes'] ?? '' ),
+				'created_at'       => current_time( 'mysql' ),
+				'expires_at'       => $data['expires_at'] ?? null,
+			),
+			array( '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
+		);
+		return $result ? $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Delete a backup record (mark as deleted).
+	 *
+	 * @param int $id Backup ID.
+	 * @return int|false Rows updated or false on error.
+	 */
+	public static function delete_backup_record( $id ) {
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->update(
+			"{$wpdb->prefix}sentinel_backups",
+			array( 'status' => 'deleted' ),
+			array( 'id' => absint( $id ) ),
+			array( '%s' ),
+			array( '%d' )
+		);
+	}
 }

@@ -127,10 +127,37 @@ class Sentinel_Core {
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/intelligence/class-intelligence-engine.php';
 		$this->modules['intelligence'] = new Intelligence_Engine( $this->settings );
 
+		// Hardening module.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/class-file-hardening.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/class-wp-config-hardening.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/class-user-hardening.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/class-database-hardening.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/class-api-hardening.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/hardening/class-hardening-engine.php';
+		$this->modules['hardening'] = new Hardening_Engine( $this->settings );
+
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-database.php';
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-files.php';
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-engine.php';
 		$this->modules['backup'] = new Backup_Engine( $this->settings );
+
+		// Reports module.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/reports/class-report-json-renderer.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/reports/class-report-csv-renderer.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/reports/class-report-html-renderer.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/reports/class-report-engine.php';
+		$this->modules['reports'] = new Report_Engine( $this->settings );
+
+		// Alert module.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-email.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-slack.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-telegram.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/alerts/class-alert-engine.php';
+		$this->modules['alerts'] = new Alert_Engine( $this->settings );
+
+		// Activity logger.
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/activity/class-activity-logger.php';
+		$this->modules['activity'] = new Activity_Logger();
 	}
 
 	/**
