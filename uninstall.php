@@ -79,14 +79,29 @@ foreach ( $cron_hooks as $hook ) {
 
 // Recursively delete backup directory.
 $backup_dir = WP_CONTENT_DIR . '/uploads/sentinel-backups/';
-if ( is_dir( $backup_dir ) ) {
-	sentinel_uninstall_delete_directory( $backup_dir );
+
+// Canonicalize path and verify it is within the expected uploads directory
+// to prevent accidental traversal via symlinks or unexpected path components.
+$real_backup_dir    = realpath( $backup_dir );
+$real_content_dir   = realpath( WP_CONTENT_DIR );
+
+if (
+	$real_backup_dir &&
+	$real_content_dir &&
+	0 === strpos( $real_backup_dir, $real_content_dir . DIRECTORY_SEPARATOR ) &&
+	is_dir( $real_backup_dir ) &&
+	is_writable( $real_backup_dir )
+) {
+	sentinel_uninstall_delete_directory( $real_backup_dir );
 }
 
 /**
  * Recursively delete a directory and its contents.
  *
- * @param string $dir Directory path to delete.
+ * Symlinks are unlinked rather than recursed into to prevent traversal
+ * outside the intended directory tree.
+ *
+ * @param string $dir Canonicalized directory path to delete.
  */
 function sentinel_uninstall_delete_directory( $dir ) {
 	if ( ! is_dir( $dir ) ) {
@@ -99,9 +114,12 @@ function sentinel_uninstall_delete_directory( $dir ) {
 			continue;
 		}
 		$path = $dir . DIRECTORY_SEPARATOR . $item;
-		if ( is_dir( $path ) ) {
+		if ( is_link( $path ) ) {
+			// Unlink symlinks without following them.
+			unlink( $path );
+		} elseif ( is_dir( $path ) ) {
 			sentinel_uninstall_delete_directory( $path );
-		} else {
+		} elseif ( is_file( $path ) ) {
 			unlink( $path );
 		}
 	}

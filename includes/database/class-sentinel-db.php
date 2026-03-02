@@ -80,17 +80,19 @@ class Sentinel_DB {
 	/**
 	 * Get scan history.
 	 *
-	 * @param int $limit Number of scans to return.
+	 * @param int $limit  Number of scans to return.
+	 * @param int $offset Number of scans to skip (for pagination).
 	 * @return array
 	 */
-	public static function get_scan_history( $limit = 20 ) {
+	public static function get_scan_history( $limit = 20, $offset = 0 ) {
 		global $wpdb;
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}sentinel_scans ORDER BY started_at DESC LIMIT %d",
-				absint( $limit )
+				"SELECT * FROM {$wpdb->prefix}sentinel_scans ORDER BY started_at DESC LIMIT %d OFFSET %d",
+				absint( $limit ),
+				absint( $offset )
 			)
 		);
 	}

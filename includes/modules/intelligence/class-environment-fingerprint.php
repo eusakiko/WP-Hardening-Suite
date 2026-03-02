@@ -77,27 +77,33 @@ class Environment_Fingerprint {
 	/**
 	 * Gather PHP runtime information.
 	 *
+	 * Returns security-relevant extension details only; the full extension list
+	 * is omitted to reduce fingerprint exposure.
+	 *
 	 * @return array
 	 */
 	private function get_php_info() {
-		$version     = phpversion();
-		$sapi        = php_sapi_name();
-		$memory      = ini_get( 'memory_limit' );
-		$extensions  = get_loaded_extensions();
+		$version = phpversion();
+		$sapi    = php_sapi_name();
+		$memory  = ini_get( 'memory_limit' );
 
 		// EOL check: PHP 7.4 and below are EOL.
 		$major_minor = (float) $version;
 		$is_eol      = $major_minor < 8.0;
 
+		// Report only the count of loaded extensions, not the full list, to
+		// limit unnecessary fingerprint exposure.
+		$extension_count = count( get_loaded_extensions() );
+
 		return array(
-			'version'    => $version,
-			'sapi'       => $sapi,
-			'memory'     => $memory,
-			'extensions' => $extensions,
-			'opcache'    => function_exists( 'opcache_get_status' ) && opcache_get_status( false ) !== false,
-			'redis'      => extension_loaded( 'redis' ),
-			'memcached'  => extension_loaded( 'memcached' ),
-			'is_eol'     => $is_eol,
+			'version'          => $version,
+			'sapi'             => $sapi,
+			'memory'           => $memory,
+			'extension_count'  => $extension_count,
+			'opcache'          => function_exists( 'opcache_get_status' ) && opcache_get_status( false ) !== false,
+			'redis'            => extension_loaded( 'redis' ),
+			'memcached'        => extension_loaded( 'memcached' ),
+			'is_eol'           => $is_eol,
 		);
 	}
 
@@ -267,17 +273,20 @@ class Environment_Fingerprint {
 	/**
 	 * Gather network and URL information.
 	 *
+	 * Server IP is intentionally omitted from the returned data to avoid
+	 * exposing internal infrastructure details. Only the `is_local` flag
+	 * (derived from the IP) is retained for security posture assessment.
+	 *
 	 * @return array
 	 */
 	private function get_network_info() {
 		$server_ip = isset( $_SERVER['SERVER_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_ADDR'] ) ) : '';
 
 		return array(
-			'home_url'    => home_url(),
-			'site_url'    => site_url(),
-			'ssl'         => is_ssl(),
-			'is_local'    => in_array( $server_ip, array( '127.0.0.1', '::1', 'localhost' ), true ),
-			'server_ip'   => $server_ip,
+			'home_url' => home_url(),
+			'site_url' => site_url(),
+			'ssl'      => is_ssl(),
+			'is_local' => in_array( $server_ip, array( '127.0.0.1', '::1', 'localhost' ), true ),
 		);
 	}
 }
