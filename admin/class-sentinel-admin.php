@@ -132,6 +132,13 @@ class Sentinel_Admin {
 				'slug'   => 'sentinel-settings',
 				'cb'     => array( $this, 'render_settings' ),
 			),
+			array(
+				'parent' => 'sentinel-security',
+				'title'  => __( 'Setup Wizard', 'wp-sentinel-security' ),
+				'menu'   => __( 'Setup Wizard', 'wp-sentinel-security' ),
+				'slug'   => 'sentinel-wizard',
+				'cb'     => array( $this, 'render_wizard' ),
+			),
 		);
 
 		foreach ( $submenus as $submenu ) {
@@ -455,6 +462,15 @@ class Sentinel_Admin {
 	 */
 	public function render_settings() {
 		require SENTINEL_PLUGIN_DIR . 'admin/views/settings.php';
+	}
+
+	/**
+	 * Render setup wizard page.
+	 *
+	 * @return void
+	 */
+	public function render_wizard() {
+		require SENTINEL_PLUGIN_DIR . 'admin/views/wizard.php';
 	}
 
 	// -------------------------------------------------------------------------

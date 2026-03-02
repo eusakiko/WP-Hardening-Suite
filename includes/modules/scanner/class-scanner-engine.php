@@ -37,6 +37,10 @@ class Scanner_Engine {
 			'File_Monitor',
 			'Malware_Detector',
 			'User_Audit',
+			'Database_Scanner',
+			'Compliance_Checker',
+			'SSL_Scanner',
+			'Header_Analyzer',
 		),
 		'quick'  => array( 'Core_Integrity', 'Plugin_Vulnerability', 'Config_Analyzer' ),
 		'core'   => array( 'Core_Integrity' ),
@@ -45,6 +49,10 @@ class Scanner_Engine {
 		'files'  => array( 'File_Monitor', 'Permission_Checker', 'Malware_Detector' ),
 		'config' => array( 'Config_Analyzer' ),
 		'user_audit' => array( 'User_Audit' ),
+		'database'   => array( 'Database_Scanner' ),
+		'compliance' => array( 'Compliance_Checker' ),
+		'ssl'        => array( 'SSL_Scanner' ),
+		'headers'    => array( 'Header_Analyzer' ),
 	);
 
 	/**
@@ -73,6 +81,10 @@ class Scanner_Engine {
 			'class-file-monitor.php',
 			'class-malware-detector.php',
 			'class-user-audit.php',
+			'class-database-scanner.php',
+			'class-compliance-checker.php',
+			'class-ssl-scanner.php',
+			'class-header-analyzer.php',
 		);
 
 		foreach ( $files as $file ) {
