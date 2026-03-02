@@ -33,6 +33,68 @@ require SENTINEL_PLUGIN_DIR . 'admin/views/partials/header.php';
 		</div>
 	</div>
 
+	<!-- Executive Summary Panel -->
+	<?php
+	$risk_level      = Scoring_Engine::get_risk_level( $score['score'] );
+	$recommendations = Scoring_Engine::get_top_recommendations( $score, ! empty( $last_scan ) );
+
+	$urgency_labels = array(
+		'critical' => __( 'Critical (Do today)', 'wp-sentinel-security' ),
+		'high'     => __( 'High (Within 48h)', 'wp-sentinel-security' ),
+		'medium'   => __( 'Medium (This week)', 'wp-sentinel-security' ),
+		'low'      => __( 'Low (Monitor)', 'wp-sentinel-security' ),
+		'info'     => __( 'Info', 'wp-sentinel-security' ),
+	);
+	?>
+	<div class="sentinel-card sentinel-executive-summary">
+		<div class="sentinel-executive-top">
+			<div class="sentinel-executive-risk">
+				<span class="sentinel-executive-risk-label"><?php esc_html_e( 'Overall Risk Level', 'wp-sentinel-security' ); ?></span>
+				<span class="sentinel-risk-badge sentinel-risk-<?php echo esc_attr( $risk_level['level'] ); ?>">
+					<?php echo esc_html( $risk_level['label'] ); ?>
+				</span>
+				<p class="sentinel-executive-risk-hint">
+					<?php esc_html_e( 'What this means:', 'wp-sentinel-security' ); ?>
+					<?php
+					$risk_hints = array(
+						'critical' => __( 'Your site has active critical vulnerabilities. Immediate action is required.', 'wp-sentinel-security' ),
+						'high'     => __( 'Your site has high-severity issues that need urgent attention within 48 hours.', 'wp-sentinel-security' ),
+						'medium'   => __( 'Your site has moderate risks that should be addressed this week.', 'wp-sentinel-security' ),
+						'low'      => __( 'Your site is mostly secure. Continue monitoring for new issues.', 'wp-sentinel-security' ),
+					);
+					echo esc_html( $risk_hints[ $risk_level['level'] ] ?? '' );
+					?>
+				</p>
+			</div>
+			<div class="sentinel-executive-severity-counts">
+				<?php foreach ( $urgency_labels as $sev => $urgency_label ) : ?>
+					<?php if ( isset( $score['by_severity'][ $sev ] ) && $score['by_severity'][ $sev ] > 0 ) : ?>
+						<div class="sentinel-severity-count-item">
+							<span class="sentinel-badge sentinel-badge-<?php echo esc_attr( $sev ); ?>">
+								<?php echo esc_html( $urgency_label ); ?>
+							</span>
+							<strong><?php echo esc_html( $score['by_severity'][ $sev ] ); ?></strong>
+						</div>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+		</div>
+
+		<div class="sentinel-executive-actions">
+			<h3><?php esc_html_e( 'Top Recommended Actions', 'wp-sentinel-security' ); ?></h3>
+			<ol class="sentinel-recommendations">
+				<?php foreach ( $recommendations as $rec ) : ?>
+					<li class="sentinel-recommendation-item">
+						<span class="sentinel-recommendation-text"><?php echo esc_html( $rec['text'] ); ?></span>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=' . $rec['page'] ) ); ?>" class="button button-primary button-small sentinel-recommendation-cta">
+							<?php echo esc_html( $rec['cta'] ); ?>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ol>
+		</div>
+	</div>
+
 	<!-- Score & Stats Row -->
 	<div class="sentinel-stats-grid sentinel-grid-4">
 

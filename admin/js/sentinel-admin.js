@@ -120,7 +120,7 @@
 			$( '.sentinel-start-scan' ).prop( 'disabled', false );
 
 			if ( 'completed' === data.status ) {
-				this.showNotification( sentinelData.i18n.scanComplete, 'success' );
+				this.showNotification( sentinelData.i18n.scanComplete, 'success', sentinelData.i18n.scanCompleteNext );
 				this.renderScanResults( data.vulnerabilities || [] );
 				$( '#sentinel-scan-results' ).show();
 			} else {
@@ -166,13 +166,42 @@
 				return;
 			}
 
+			var urgencyMap = {
+				critical: sentinelData.i18n.urgencyCritical,
+				high:     sentinelData.i18n.urgencyHigh,
+				medium:   sentinelData.i18n.urgencyMedium,
+				low:      sentinelData.i18n.urgencyLow,
+				info:     sentinelData.i18n.urgencyInfo,
+			};
+
 			$.each( vulnerabilities, function ( i, v ) {
-				var row = '<tr data-severity="' + $( '<span>' ).text( v.severity ).html() + '">' +
-					'<td><span class="sentinel-badge sentinel-badge-' + $( '<span>' ).text( v.severity ).html() + '">' + $( '<span>' ).text( v.severity ).html().toUpperCase() + '</span></td>' +
+				var sev = $( '<span>' ).text( v.severity ).html();
+				var urgency = $( '<span>' ).text( urgencyMap[ v.severity ] || v.severity ).html();
+				var compType = v.component_type || '';
+				var ctaHtml;
+
+				// Determine the most actionable CTA available.
+				if ( 'plugin' === compType || 'theme' === compType ) {
+					ctaHtml = '<a href="' + sentinelData.updateUrl + '" class="button button-small button-primary">' +
+						sentinelData.i18n.fixNow + '</a> ';
+				} else {
+					ctaHtml = '<a href="' + sentinelData.hardeningUrl + '" class="button button-small button-primary">' +
+						sentinelData.i18n.fixNow + '</a> ';
+				}
+
+				var safeId = parseInt( v.id, 10 ) || 0;
+				ctaHtml += '<button class="button button-small sentinel-vuln-details" data-id="' + safeId + '">' +
+					sentinelData.i18n.viewGuide + '</button>';
+
+				var row = '<tr data-severity="' + sev + '">' +
+					'<td>' +
+						'<span class="sentinel-badge sentinel-badge-' + sev + '">' + sev.toUpperCase() + '</span>' +
+						'<span class="sentinel-urgency-label">' + urgency + '</span>' +
+					'</td>' +
 					'<td>' + $( '<span>' ).text( v.component_name ).html() + ' ' + $( '<span>' ).text( v.component_version ).html() + '</td>' +
 					'<td>' + $( '<span>' ).text( v.title ).html() + '</td>' +
 					'<td>' + $( '<span>' ).text( v.cvss_score ).html() + '</td>' +
-					'<td><button class="button button-small sentinel-vuln-details" data-id="' + parseInt( v.id, 10 ) + '">Details</button></td>' +
+					'<td class="sentinel-finding-actions">' + ctaHtml + '</td>' +
 					'</tr>';
 				$body.append( row );
 			} );
@@ -198,7 +227,7 @@
 				},
 				success: function ( response ) {
 					if ( response.success ) {
-						self.showNotification( sentinelData.i18n.backupComplete, 'success' );
+						self.showNotification( sentinelData.i18n.backupComplete, 'success', sentinelData.i18n.backupCompleteNext );
 					} else {
 						self.showNotification( response.data.message || sentinelData.i18n.backupFailed, 'error' );
 					}
@@ -290,12 +319,17 @@
 		/**
 		 * Show a temporary notification.
 		 *
-		 * @param {string} message Notification message.
-		 * @param {string} type    'success' | 'error' | 'info'
+		 * @param {string} message  Notification message.
+		 * @param {string} type     'success' | 'error' | 'info'
+		 * @param {string} nextStep Optional next-step hint shown below the message.
 		 */
-		showNotification: function ( message, type ) {
+		showNotification: function ( message, type, nextStep ) {
 			type = type || 'info';
-			var $note = $( '<div class="sentinel-notification sentinel-notification-' + type + '">' + $( '<span>' ).text( message ).html() + '</div>' );
+			var html = $( '<span>' ).text( message ).html();
+			if ( nextStep ) {
+				html += '<div class="sentinel-notification-next">' + $( '<span>' ).text( nextStep ).html() + '</div>';
+			}
+			var $note = $( '<div class="sentinel-notification sentinel-notification-' + type + '">' + html + '</div>' );
 			$( 'body' ).append( $note );
 
 			setTimeout( function () {

@@ -79,15 +79,15 @@
 				success: function ( vuln ) {
 					var html = '<tr class="sentinel-vuln-detail-row">' +
 						'<td colspan="5" style="background:#f9fafb;padding:16px;">' +
-						'<strong>Description:</strong><p>' + $( '<span>' ).text( vuln.description || '' ).html() + '</p>' +
-						'<strong>Recommendation:</strong><p>' + $( '<span>' ).text( vuln.recommendation || '' ).html() + '</p>' +
-						( vuln.cvss_vector ? '<strong>CVSS Vector:</strong><p>' + $( '<span>' ).text( vuln.cvss_vector ).html() + '</p>' : '' ) +
+						'<strong>' + sentinelData.i18n.whatThisMeans + '</strong><p>' + $( '<span>' ).text( vuln.description || '' ).html() + '</p>' +
+						'<strong>' + sentinelData.i18n.whatToDoNext + '</strong><p>' + $( '<span>' ).text( vuln.recommendation || '' ).html() + '</p>' +
+						( vuln.cvss_vector ? '<details><summary><strong>Advanced details</strong></summary><p>' + $( '<span>' ).text( vuln.cvss_vector ).html() + '</p></details>' : '' ) +
 						'</td></tr>';
 					$row.after( html );
 				},
 				error: function () {
 					var html = '<tr class="sentinel-vuln-detail-row">' +
-						'<td colspan="5"><em>Details not available.</em></td></tr>';
+						'<td colspan="5"><em>' + sentinelData.i18n.detailsUnavailable + '</em></td></tr>';
 					$row.after( html );
 				},
 			} );
