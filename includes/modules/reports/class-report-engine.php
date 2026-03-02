@@ -6,7 +6,7 @@
  * Registers AJAX handlers for the admin reports interface.
  *
  * @package WP_Sentinel_Security
- * @since   1.0.0
+ * @since   2.0.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

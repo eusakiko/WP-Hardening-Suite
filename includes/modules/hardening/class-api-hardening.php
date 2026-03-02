@@ -13,7 +13,7 @@
  * be toggled independently without touching wp-config.php.
  *
  * @package WP_Sentinel_Security
- * @since   1.0.0
+ * @since   2.0.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

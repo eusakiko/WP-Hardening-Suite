@@ -5,7 +5,7 @@
  * Sends Block Kit payloads to a Slack incoming webhook.
  *
  * @package WP_Sentinel_Security
- * @since   1.0.0
+ * @since   2.0.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

@@ -8,7 +8,7 @@
  * @var int     $score   Overall hardening score (0–100) from Hardening_Engine::get_hardening_score().
  *
  * @package WP_Sentinel_Security
- * @since   1.0.0
+ * @since   2.0.0
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
