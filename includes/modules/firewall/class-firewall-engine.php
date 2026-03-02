@@ -271,26 +271,27 @@ class Firewall_Engine {
 			$inputs[] = sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) );
 		}
 
-		// GET parameters.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// GET parameters — raw values inspected intentionally (sanitization would strip attack patterns).
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		foreach ( $_GET as $value ) {
 			if ( is_string( $value ) ) {
-				$inputs[] = $value;
+				$inputs[] = wp_unslash( $value );
 			}
 		}
 
-		// POST parameters.
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		// POST parameters — raw values inspected intentionally for WAF pattern detection.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		foreach ( $_POST as $value ) {
 			if ( is_string( $value ) ) {
-				$inputs[] = $value;
+				$inputs[] = wp_unslash( $value );
 			}
 		}
 
-		// Cookie values.
+		// Cookie values — raw values inspected intentionally for WAF pattern detection.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		foreach ( $_COOKIE as $value ) {
 			if ( is_string( $value ) ) {
-				$inputs[] = $value;
+				$inputs[] = wp_unslash( $value );
 			}
 		}
 

@@ -193,9 +193,12 @@ class Two_Factor_Auth {
 
 		update_user_meta( $user_id, self::META_SECRET, $secret );
 		update_user_meta( $user_id, self::META_ENABLED, '1' );
-		update_user_meta( $user_id, self::META_RECOVERY, wp_json_encode( array_map( function ( $code ) {
-			return wp_hash( $code );
-		}, $recovery_codes ) ) );
+
+		$hashed_codes = array();
+		foreach ( $recovery_codes as $code ) {
+			$hashed_codes[] = wp_hash( $code );
+		}
+		update_user_meta( $user_id, self::META_RECOVERY, wp_json_encode( $hashed_codes ) );
 
 		return $recovery_codes;
 	}
