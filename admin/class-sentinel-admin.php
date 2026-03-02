@@ -335,9 +335,15 @@ class Sentinel_Admin {
 	 * @return void
 	 */
 	public function render_backups() {
-		$backups = $this->get_backups_list();
-		echo '<div class="wrap"><h1>' . esc_html__( 'Backups', 'wp-sentinel-security' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Backup management coming soon.', 'wp-sentinel-security' ) . '</p></div>';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-database.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-files.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-engine.php';
+		$engine       = new Backup_Engine( $this->settings );
+		$backups      = $engine->get_backups( 1, 20 );
+		$storage_size = $engine->get_backup_storage_size();
+		$backup_count = $backups['total'];
+		$backups      = $backups['items'];
+		require SENTINEL_PLUGIN_DIR . 'admin/views/backups.php';
 	}
 
 	/**

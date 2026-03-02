@@ -126,6 +126,11 @@ class Sentinel_Core {
 
 		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/intelligence/class-intelligence-engine.php';
 		$this->modules['intelligence'] = new Intelligence_Engine( $this->settings );
+
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-database.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-files.php';
+		require_once SENTINEL_PLUGIN_DIR . 'includes/modules/backup/class-backup-engine.php';
+		$this->modules['backup'] = new Backup_Engine( $this->settings );
 	}
 
 	/**
